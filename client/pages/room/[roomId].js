@@ -24,15 +24,6 @@ export default function Room() {
   const decorationRef = useRef([]);
   const emitTypingTimeout = useRef(null);
   useEffect(() => {
-    if (!hasJoined.current && roomId && name) {
-      socket.emit("Joining room", { roomId, name });
-      hasJoined.current = true;
-
-      if (isCreator === "true") {
-        socket.emit("room-created", { roomId, name });
-      }
-    }
-
     const handleUserJoined = (joinedName) => {
       if (isCreator !== "true" || joinedName !== name) {
         setMessages((prev) => [...prev, `${joinedName} joined the room`]);
@@ -106,6 +97,14 @@ export default function Room() {
         setOutput("Error: " + err.message);
       }
     });
+     if (!hasJoined.current && roomId && name) {
+      socket.emit("Joining room", { roomId, name });
+      hasJoined.current = true;
+
+      if (isCreator === "true") {
+        socket.emit("room-created", { roomId, name });
+      }
+    }
 
     return () => {
       socket.off("user-joined", handleUserJoined);

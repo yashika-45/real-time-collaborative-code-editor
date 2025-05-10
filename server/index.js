@@ -28,9 +28,6 @@ io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
   socket.on("Joining room",({roomId,name}) => {
     socket.join(roomId);
-    if(rooms[roomId]){
-      socket.emit("current-state", rooms[roomId]);
-    }
     if(!rooms[roomId]){
       rooms[roomId]={
         code: "//Start coding...",
@@ -38,6 +35,7 @@ io.on("connection", (socket) => {
         output:'Output will appear here...',
       };
     }
+    socket.emit("current-state", rooms[roomId]);
     socket.data.username=name;
     socket.data.roomId=roomId;
     io.to(roomId).emit("user-joined", name);
@@ -52,6 +50,9 @@ io.on("connection", (socket) => {
     io.emit("message", message);
   });
   socket.on("code-update",(newCode,roomId) => {
+    if (rooms[roomId]) {
+    rooms[roomId].code = newCode;
+  }
     console.log(`code updated in room ${roomId}`);
     io.to(roomId).emit("code-updated", newCode);
   });
