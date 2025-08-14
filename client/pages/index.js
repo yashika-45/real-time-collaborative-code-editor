@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { v4 as uuidv4 } from 'uuid';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
@@ -44,32 +44,35 @@ export default function Home() {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 flex flex-col items-center h-full text-white p-6">
-        <h1 className="text-4xl mt-15 font-bold mb-6 text-center">
+      <div className="relative z-10 flex flex-col items-center h-full text-white p-4 sm:p-6 lg:p-10">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-10 sm:mt-12 text-center">
           Welcome to Code Connect
         </h1>
-        <p className="text-lg mt-4 text-center max-w-2xl leading-relaxed">
-    Collaborate with your team, friends, or peers seamlessly in a shared coding environment. Code Connect allows you to write, test, and debug code together, in real time, no matter where you are. Whether you're pairing up on a project, hosting a coding session, or just sharing ideas, Code Connect is designed to enhance your workflow and foster collaboration.
-    Get started instantly and experience smooth, synchronized coding like never before.
-  </p>
+        <p className="text-sm sm:text-base lg:text-lg mt-4 text-center max-w-lg sm:max-w-2xl leading-relaxed">
+          Collaborate with your team, friends, or peers seamlessly in a shared coding environment.
+          Code Connect allows you to write, test, and debug code together, in real time, no matter where you are.
+          Whether you're pairing up on a project, hosting a coding session, or just sharing ideas, Code Connect is designed to
+          enhance your workflow and foster collaboration. Get started instantly and experience smooth, synchronized coding like never before.
+        </p>
+
         {action === null ? (
-          <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-8">
             <button
               onClick={() => handleActionChoice("create")}
-              className="w-45 py-3 mt-10 mr-3 px-6 bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200"
+              className="w-full sm:w-auto py-3 px-6 bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200"
             >
               Create New Room
             </button>
             <button
               onClick={() => handleActionChoice("join")}
-              className="w-55 py-3 mt-10 px-6 bg-green-600 rounded-lg shadow-lg hover:bg-green-700 transition duration-200"
+              className="w-full sm:w-auto py-3 px-6 bg-green-600 rounded-lg shadow-lg hover:bg-green-700 transition duration-200"
             >
-              Join an existing Room
+              Join an Existing Room
             </button>
           </div>
         ) : (
-          <div className="space-y-4 w-full max-w-sm">
-            <div className="flex flex-col items-center">
+          <div className="space-y-4 w-full max-w-sm mt-6">
+            <div className="flex flex-col">
               <input
                 type="text"
                 placeholder="Enter your Name"
@@ -87,7 +90,7 @@ export default function Home() {
                 Create Room
               </button>
             ) : (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col">
                 <input
                   type="text"
                   placeholder="Enter Room ID"
@@ -106,7 +109,7 @@ export default function Home() {
           </div>
         )}
 
-        {error && <p className="text-red-400 mt-4">{error}</p>}
+        {error && <p className="text-red-400 mt-4 text-sm sm:text-base">{error}</p>}
       </div>
     </div>
   );

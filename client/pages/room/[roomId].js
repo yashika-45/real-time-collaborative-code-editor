@@ -2,8 +2,12 @@ import { useRouter } from "next/router";
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { Editor } from "@monaco-editor/react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import axios from "axios";
-const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] });
+const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
+  transports: ["websocket"],
+});
+
 import { runCode } from "../../utils/runCode";
 
 export default function Room() {
@@ -17,6 +21,7 @@ export default function Room() {
   const isCreator = router.query.isCreater;
   const [output, setOutput] = useState("Output will appear here...");
   const hasJoined = useRef(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   let typingTimeout = useRef(null);
   const isTyping = useRef(false);
@@ -119,19 +124,36 @@ export default function Room() {
       socket.off("current-state");
     };
   }, [roomId, name, isCreator]);
-
-  const handleEditorChange = (newValue) => {
-    setCode(newValue);
-    socket.emit("code-update", newValue, roomId);
-    socket.emit("user-typing", { roomId, name });
-    if (emitTypingTimeout.current) {
-      clearTimeout(emitTypingTimeout.current);
-    }
-    emitTypingTimeout.current = setTimeout(() => {
-      socket.emit("stop-typing", { roomId, name });
-      isTyping.current = false;
-    }, 1000);
+// Add this debounce helper at the top
+function debounce(func, delay) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), delay);
   };
+}
+
+// Inside your component
+const emitCodeUpdate = useRef(
+  debounce((newValue, roomId) => {
+    socket.emit("code-update", newValue, roomId);
+  }, 300) // adjust delay as needed
+).current;
+
+const handleEditorChange = (newValue) => {
+  setCode(newValue);
+  emitCodeUpdate(newValue, roomId); // send only after small delay
+  socket.emit("user-typing", { roomId, name });
+
+  if (emitTypingTimeout.current) {
+    clearTimeout(emitTypingTimeout.current);
+  }
+  emitTypingTimeout.current = setTimeout(() => {
+    socket.emit("stop-typing", { roomId, name });
+    isTyping.current = false;
+  }, 1000);
+};
+
 
   const handleLangChange = (e) => {
     const newLang = e.target.value;
@@ -201,16 +223,16 @@ export default function Room() {
   }
 
   return (
-    <div className="flex h-[100vh] overflow-hidden">
-      {/* Left: Room Activity + Buttons */}
-      <div className="w-1/3 flex flex-col border-r p-4">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
+      {/* ===== Desktop Left Panel ===== */}
+      <div className="hidden md:flex md:w-1/3 flex-col border-r p-4">
         {/* Room Activity */}
         <div className="flex-1 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold mb-2">Room Activity</h2>
+              <h2 className="text-lg font-semibold">Room Activity</h2>
               <select
-                className="w-2/5 p-2 border rounded ml-auto"
+                className="p-2 border rounded"
                 value={language}
                 onChange={handleLangChange}
               >
@@ -221,31 +243,30 @@ export default function Room() {
                 <option value="html">HTML</option>
               </select>
             </div>
-            <div className="mt-4 space-y-2">
-              <ul className="text-sm text-gray-600 space-y-1">
-                {messages.map((msg, idx) => (
-                  <li key={idx}>{msg}</li>
-                ))}
-              </ul>
+
+            <div className="mt-4 space-y-1 text-sm text-gray-600">
+              {messages.map((msg, idx) => (
+                <li key={idx}>{msg}</li>
+              ))}
             </div>
           </div>
+
           {typingUser && (
             <p className="text-sm italic text-red-500 mt-2">
               {typingUser} is typing...
             </p>
           )}
-          {/* Buttons at the bottom */}
+
           <div className="mt-4 flex space-x-3">
             <button
               onClick={leaveRoom}
-              className="w-full bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+              className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
             >
               Leave Room
             </button>
-
             <button
               onClick={copyRoomId}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-200"
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-200"
             >
               Copy Room ID
             </button>
@@ -253,52 +274,128 @@ export default function Room() {
         </div>
       </div>
 
-      {/* Right: Monaco Editor + Run Button + Output */}
-      <div className="w-2/3 flex flex-col p-4">
-        {/* Editor */}
-        <Editor
-          height="70vh"
-          language={language}
-          theme="vs-dark"
-          value={code}
-          onChange={handleEditorChange}
-          options={{
-            fontSize: 14,
-            minimap: { enabled: false },
-            automaticLayout: true,
-          }}
-          onMount={(editor,monaco) => {
-            editorRef.current = editor;
-            editor.onDidChangeCursorSelection((e) => {
-              const position = e.selection.getPosition();
-              socket.emit("cursor-change", {
-                roomId,
-                name,
-                position,
-              });
-            });
-            editorRef.current.monaco=monaco;
-          }}
-        />
+      {/* ===== Desktop Right Panel / Mobile Main ===== */}
+      {/* ===== Desktop Right Panel ===== */}
+<div className="flex-1 flex flex-col p-4">
+  {/* Editor takes most height */}
+  <div className="flex-1 min-h-0">
+    <Editor
+      height="100%"
+      language={language}
+      theme="vs-dark"
+      value={code}
+      onChange={handleEditorChange}
+      options={{
+        fontSize: 14,
+        minimap: { enabled: false },
+        automaticLayout: true,
+      }}
+      onMount={(editor, monaco) => {
+        editorRef.current = editor;
+        editor.onDidChangeCursorSelection((e) => {
+          const position = e.selection.getPosition();
+          socket.emit("cursor-change", { roomId, name, position });
+        });
+        editorRef.current.monaco = monaco;
+      }}
+    />
+  </div>
 
-        {/* Run Button */}
-        <button
-          onClick={handleRun}
-          className="bg-green-600 text-white px-4 py-2 rounded mt-4 self-start hover:bg-green-700 transition"
-        >
-          Run Code
-        </button>
+  {/* Run Button + Output */}
+  <div className="mt-2">
+    <button
+      onClick={handleRun}
+      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+    >
+      Run Code
+    </button>
+    <div
+      className={
+        output === "Output will appear here..."
+          ? "text-gray-500 mt-2"
+          : "bg-black text-white p-4 mt-2 rounded h-[20vh] overflow-y-auto"
+      }
+    >
+      <pre>{output}</pre>
+    </div>
+  </div>
+</div>
 
-        {/* Output Box */}
+
+      {/* ===== Mobile Bottom Collapsible Panel ===== */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+        {/* Toggle Header */}
         <div
-          className={
-            output === "Output will appear here..."
-              ? "text-gray-500"
-              : "bg-black text-white p-4 mt-4 rounded h-[20vh] overflow-y-auto"
-          }
+          className="flex items-center justify-center py-2 cursor-pointer bg-gray-100"
+          onClick={() => setIsPanelOpen((prev) => !prev)}
         >
-          <pre>{output}</pre>
+          {isPanelOpen ? (
+            <ChevronDown size={20} />
+          ) : (
+            <ChevronUp size={20} />
+          )}
         </div>
+
+        {/* Collapsible Content */}
+        {isPanelOpen && (
+          <div className="p-4 space-y-4 max-h-[50vh] overflow-y-auto">
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-semibold">Language</label>
+              <select
+                className="p-2 border rounded"
+                value={language}
+                onChange={handleLangChange}
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+                <option value="html">HTML</option>
+              </select>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Room Activity</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {messages.map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+
+            {typingUser && (
+              <p className="text-sm italic text-red-500">
+                {typingUser} is typing...
+              </p>
+            )}
+
+            <div className="flex flex-col space-y-2">
+              <button
+                onClick={leaveRoom}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+              >
+                Leave Room
+              </button>
+              <button
+                onClick={copyRoomId}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-200"
+              >
+                Copy Room ID
+              </button>
+              
+            </div>
+
+            {/* <div
+              className={
+                output === "Output will appear here..."
+                  ? "text-gray-500"
+                  : "bg-black text-white p-4 rounded h-[15vh] overflow-y-auto"
+              }
+            >
+              <pre>{output}</pre>
+            </div> */}
+          </div>
+        )}
       </div>
     </div>
   );
