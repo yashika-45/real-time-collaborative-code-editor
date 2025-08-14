@@ -73,13 +73,13 @@ export default function Home() {
         ) : (
           <div className="space-y-4 w-full max-w-sm mt-6">
             <div className="flex flex-col">
-              <input
-                type="text"
-                placeholder="Enter your Name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                className="w-full text-black border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+           <input
+  type="text"
+  placeholder="Enter your Name"
+  value={userName}
+  onChange={(e) => setUserName(e.target.value)}
+  className="w-full bg-white/95 text-gray-900 placeholder-gray-500 border border-gray-300 px-4 py-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
             </div>
 
             {action === "create" ? (
@@ -92,12 +92,12 @@ export default function Home() {
             ) : (
               <div className="flex flex-col">
                 <input
-                  type="text"
-                  placeholder="Enter Room ID"
-                  value={roomIdInput}
-                  onChange={(e) => setRoomIdInput(e.target.value)}
-                  className="w-full text-black border px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+  type="text"
+  placeholder="Enter Room ID"
+  value={roomIdInput}
+  onChange={(e) => setRoomIdInput(e.target.value)}
+  className="w-full bg-white/95 text-gray-900 placeholder-gray-500 border border-gray-300 px-4 py-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
                 <button
                   onClick={joinRoom}
                   className="w-full mt-2 py-3 px-6 bg-green-600 rounded-lg shadow-lg hover:bg-green-700 transition duration-200"
