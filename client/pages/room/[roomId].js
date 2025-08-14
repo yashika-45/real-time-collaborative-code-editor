@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { Editor } from "@monaco-editor/react";
 import axios from "axios";
-const socket = io("http://localhost:5000");
+const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] });
 import { runCode } from "../../utils/runCode";
 
 export default function Room() {
